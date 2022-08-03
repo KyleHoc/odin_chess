@@ -1,5 +1,6 @@
+require_relative "spaces_methods"
 class Bishop
-    attr_accessor :color, :name, :position, :coordinate, :valid_spaces
+    attr_accessor :color, :name, :position, :coordinate, :valid_spaces, :id
     
     def initialize(number, color, position, coordinate)
         @color = color
@@ -16,24 +17,25 @@ class Bishop
         @position = position
         @coordinate = coordinate
         @valid_spaces = []
+        @id = "B#{number}"
     end
 
-    def get_valid_spaces
-        template = [[1,1],[2,2],[3,3],[4,4],[5,5],[6,6],[7,7],
-               [-1,1],[-2,2],[-3,3],[-4,4],[-5,5],[-6,6],[-7,7],
-               [1,-1],[2,-2],[3,-3],[4,-4],[5,-5],[6,-6],[7,-7],
-               [-1,-1],[-2,-2],[-3,-3],[-4,-4],[-5,-5],[-6,-6],[-7,-7]]
-        temp = []
-        @valid_spaces = template
-        @valid_spaces.each do |space|
-            space[0] = space[0] + @coordinate[0]
-            space[1] = space[1] + @coordinate[1]
-        end
+    def get_valid_spaces(board, color)
+        template1 = [[1,1],[2,2],[3,3],[4,4],[5,5],[6,6],[7,7]]
+        template2 = [[-1,1],[-2,2],[-3,3],[-4,4],[-5,5],[-6,6],[-7,7]]
+        template3 = [[1,-1],[2,-2],[3,-3],[4,-4],[5,-5],[6,-6],[7,-7]]
+        template4 = [[-1,-1],[-2,-2],[-3,-3],[-4,-4],[-5,-5],[-6,-6],[-7,-7]]
+        
+        one = determine_spaces(template1)
+        two = determine_spaces(template2)
+        three = determine_spaces(template3)
+        four = determine_spaces(template4)
 
-        @valid_spaces.each do |x|
-            temp = temp.append(x.reject {|num| num < 0 || num >= 8})
-        end
+        one = obstruction_finder(one, board, color)
+        two = obstruction_finder(two, board, color)
+        three = obstruction_finder(three, board, color)
+        four = obstruction_finder(four, board, color)
 
-        @valid_spaces = temp.select {|x|x.length == 2}
+        @valid_spaces = one.concat(two).concat(three).concat(four)
     end
 end

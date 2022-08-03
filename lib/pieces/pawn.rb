@@ -1,5 +1,6 @@
+require_relative "spaces_methods"
 class Pawn
-    attr_accessor :color, :name, :position, :coordinate, :valid_spaces
+    attr_accessor :color, :name, :position, :coordinate, :valid_spaces, :id
     
     def initialize(number, color, position, coordinate)
         @color = color
@@ -16,21 +17,21 @@ class Pawn
         @position = position
         @coordinate = coordinate
         @valid_spaces = []
+        @id = "P#{number}"
     end
 
-    def get_valid_spaces
-        template = [[1,0],[2,0]]
-        temp = []
-        @valid_spaces = template
-        @valid_spaces.each do |space|
-            space[0] = space[0] + @coordinate[0]
-            space[1] = space[1] + @coordinate[1]
+    def get_valid_spaces(board, color)
+        if color == 'B'
+          template = [[1,0],[2,0]]
+        else
+          template = [[-1,0],[-2,0]]
         end
 
-        @valid_spaces.each do |x|
-            temp = temp.append(x.reject {|num| num < 0 || num >= 8})
-        end
+        @valid_spaces = determine_spaces(template)
+        @valid_spaces = remove_occupied(@valid_spaces, board, color)
 
-        @valid_spaces = temp.select {|x|x.length == 2}
+        if self.coordinate[0] != 6
+            @valid_spaces.pop
+        end
     end
 end

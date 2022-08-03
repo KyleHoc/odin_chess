@@ -1,5 +1,6 @@
+require_relative "spaces_methods"
 class King
-    attr_accessor :color, :name, :position, :valid_spaces
+    attr_accessor :color, :name, :position, :valid_spaces, :id, :coordinate
     
     def initialize(number, color, position, coordinate)
         @color = color
@@ -16,21 +17,14 @@ class King
         @position = position
         @coordinate = coordinate
         @valid_spaces = []
+        @id = "K"
     end
 
-    def get_valid_spaces
+    def get_valid_spaces(board, color)
         template = [[0,1],[0,-1],[1,0],[-1,0],[1,1],[-1,-1],[1,-1],[-1,1]]
-        temp = []
-        @valid_spaces = template
-        @valid_spaces.each do |space|
-            space[0] = space[0] + @coordinate[0]
-            space[1] = space[1] + @coordinate[1]
-        end
-
-        @valid_spaces.each do |x|
-            temp = temp.append(x.reject {|num| num < 0 || num >= 8})
-        end
-
-        @valid_spaces = temp.select {|x|x.length == 2}
+        @valid_spaces = determine_spaces(template)
+        @valid_spaces = remove_occupied(@valid_spaces, board, color)
     end
 end
+
+#determine spaces works, but remove occupied isn't doing anything

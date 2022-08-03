@@ -3,7 +3,6 @@ class Space
     def initialize(letter, number, occupant)
         @position = "#{letter}#{number}"
         @occupant = occupant
-        @eighth = false
     end
 
     def position
