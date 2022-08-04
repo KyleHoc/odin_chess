@@ -26,4 +26,20 @@ class Knight
         @valid_spaces = determine_spaces(template)
         @valid_spaces = remove_occupied(@valid_spaces, board, color)
     end
+
+    def determine_spaces(template)
+        temp = []
+        valid_array = template
+        valid_array.each do |space|
+            space[0] = space[0] + @coordinate[0]
+            space[1] = space[1] + @coordinate[1]
+        end
+    
+        valid_array.each do |x|
+            temp = temp.append(x.reject {|num| num < 0 || num >= 8})
+        end
+    
+        valid_array = temp.select {|x|x.length == 2}
+        valid_array
+    end
 end

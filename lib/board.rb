@@ -94,21 +94,24 @@ class Board
           valid_id = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'B1', 'B2', 'K1', 'K2', 'R1', 'R2', 'K', 'Q']
           puts "Select the piece you'd like to move. Ex. K2 to move Knight 2. King and Queen are just K and Q respectively."
           id = gets.chomp.upcase
-          
+
           if valid_id.include?(id)
+            piece = get_piece(id, color)
+            piece.get_valid_spaces(board, color)
+            valid_positions = get_positions(piece.valid_spaces)
+          end
+          
+          if valid_id.include?(id) && valid_positions.length != 0
             choose_piece = true
           else
-            puts "Invalid piece. Try again."
+            puts "Invalid piece, or it cannot move. Try again."
           end
         end
-
-        piece = get_piece(id)
-        piece.get_valid_spaces(board, color)
-        valid_positions = get_positions(piece.valid_spaces)
 
         choose_dest = false
         while choose_dest == false
             puts "Choose a valid space to move this piece (A1-H8)"
+            puts "This piece can move to: #{valid_positions}"
             destination = gets.chomp.upcase
 
             if valid_positions.include?(destination)
@@ -121,12 +124,13 @@ class Board
         assign_location(piece, destination, self)
     end
 
-    def get_piece(id)
+    def get_piece(id, color)
         x = 0
+        piece = nil
         while x < 8 do
             y = 0
             while y < 8 do
-                if id == @spaces[x][y].occupant.id
+                if id == @spaces[x][y].occupant.id && color == @spaces[x][y].occupant.color
                     piece = @spaces[x][y].occupant
                 end
                 y+=1
@@ -158,29 +162,29 @@ class Board
         end
     end
 
-    def valid_starting_spaces(board)
-        y = 0
-        while y < 8
-            board.spaces[0][y].occupant.get_valid_spaces(my_board, my_board.spaces[0][y].occupant.color)
-        end
-        y = 0
-        while y < 8
-            board.spaces[1][y].occupant.get_valid_spaces(my_board, my_board.spaces[1][y].occupant.color)
-        end
-        y = 0
-        while y < 8
-            board.spaces[6][y].occupant.get_valid_spaces(my_board, my_board.spaces[6][y].occupant.color)
-        end
-        y = 0
-        while y < 8
-            board.spaces[7][y].occupant.get_valid_spaces(my_board, my_board.spaces[7][y].occupant.color)
-        end
-    end
+    #def valid_starting_spaces(board)
+        #y = 0
+        #while y < 8
+            #board.spaces[0][y].occupant.get_valid_spaces(board, board.spaces[0][y].occupant.color)
+        #end
+        #y = 0
+        #while y < 8
+            #board.spaces[1][y].occupant.get_valid_spaces(board, board.spaces[1][y].occupant.color)
+        #end
+        #y = 0
+        #while y < 8
+            #board.spaces[6][y].occupant.get_valid_spaces(board, board.spaces[6][y].occupant.color)
+        #end
+        #y = 0
+        #while y < 8
+            #board.spaces[7][y].occupant.get_valid_spaces(board, board.spaces[7][y].occupant.color)
+        #end
+    #end
 
     def get_positions(valid_spaces)
         valid_positions = []
-        x = 0
         valid_spaces.each do |space|
+            x = 0
             while x < 8 do
                 y = 0
                 while y < 8 do
@@ -195,16 +199,29 @@ class Board
         end
         valid_positions
     end
+
+    def checkmate(color)
+        king_present = get_piece('K', color)
+        winner = []
+
+        if king_present == nil
+            winner.append(true)
+            winner.append(color)
+        else
+            winner.append(false)
+        end
+        winner
+    end
 end
 
-my_board = Board.new()
-my_board.generate_pieces
-my_board.print_board
-my_board.spaces[6][3].occupant.get_valid_spaces(my_board, my_board.spaces[6][3].occupant.color)
-p my_board.spaces[6][3].occupant
-my_board.make_move(my_board, "W")
+#my_board = Board.new()
+#my_board.generate_pieces
+#my_board.print_board
+#my_board.spaces[6][3].occupant.get_valid_spaces(my_board, my_board.spaces[6][3].occupant.color)
+#p my_board.spaces[6][3].occupant
+#my_board.make_move(my_board, "W")
 #my_board.assign_location(my_board.spaces[6][3].occupant, "F4", my_board)
-my_board.print_board
+#my_board.print_board
 #my_board.spaces[5][3].occupant.get_valid_spaces(my_board, my_board.spaces[5][3].occupant.color)
 #p my_board.spaces[5][3].occupant
 #p my_board.spaces[6][3].occupant

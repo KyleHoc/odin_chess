@@ -30,7 +30,7 @@ class Queen
         template7 = [[-1,0],[-2,0],[-3,0],[-4,0],[-5,0],[-6,0],[-7,0]]
         template8 = [[0,-1],[0,-2],[0,-3],[0,-4],[0,-5],[0,-6],[0,-7]]
 
-        one = determine_spaces(template1)
+        one = determine_spaces(template)
         two = determine_spaces(template2)
         three = determine_spaces(template3)
         four = determine_spaces(template4)
@@ -49,5 +49,21 @@ class Queen
         eight = obstruction_finder(eight, board, color)
 
         @valid_spaces = one.concat(two).concat(three).concat(four).concat(five).concat(six).concat(seven).concat(eight)
+    end
+
+    def determine_spaces(template)
+        temp = []
+        valid_array = template
+        valid_array.each do |space|
+            space[0] = space[0] + @coordinate[0]
+            space[1] = space[1] + @coordinate[1]
+        end
+    
+        valid_array.each do |x|
+            temp = temp.append(x.reject {|num| num < 0 || num >= 8})
+        end
+    
+        valid_array = temp.select {|x|x.length == 2}
+        valid_array
     end
 end
