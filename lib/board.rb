@@ -7,10 +7,12 @@ require "./pieces/bishop"
 require "./pieces/pawn"
 require_relative "./pieces/empty"
 class Board
-    attr_accessor :spaces
+    attr_accessor :spaces, :valid_id, :queen_count
     def initialize()
         alpha = ['A', 'B', 'C', 'D', 'E', 'F', "G", 'H']
         @spaces = Array.new(8){Array.new(8)}
+        @valid_id = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'B1', 'B2', 'K1', 'K2', 'R1', 'R2', 'K', 'Q']
+        @queen_count = 1
 
         x = 0
         while x < 8 do
@@ -91,14 +93,25 @@ class Board
     def make_move(board, color)
         choose_piece = false
         while choose_piece == false
-          valid_id = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'B1', 'B2', 'K1', 'K2', 'R1', 'R2', 'K', 'Q']
           puts "Select the piece you'd like to move. Ex. K2 to move Knight 2. King and Queen are just K and Q respectively."
           id = gets.chomp.upcase
 
-          if valid_id.include?(id)
+          if @valid_id.include?(id)
             piece = get_piece(id, color)
             piece.get_valid_spaces(board, color)
             valid_positions = get_positions(piece.valid_spaces)
+
+            pawn_pos = []
+            if id.include?("P")
+                pawn_pos = pawn_capture(piece.coordinate, color)
+                valid_positions = front_occupied(valid_positions, piece.color, piece.coordinate)
+            end
+
+            if !pawn_pos.empty?
+                valid_positions.append(pawn_pos[0])
+                valid_positions.append(pawn_pos[1])
+                valid_positions = valid_positions.compact
+            end
           end
           
           if valid_id.include?(id) && valid_positions.length != 0
@@ -122,6 +135,12 @@ class Board
         end
 
         assign_location(piece, destination, self)
+        
+        if piece.id.include?("P") && (destination.include?("A") || destination.include?("H"))
+            @queen_count+=1
+            promotion(destination, piece.coordinate, piece.color, @queen_count)
+            @valid_id.append("Q#{@queen_count}")
+        end
     end
 
     def get_piece(id, color)
@@ -162,25 +181,6 @@ class Board
         end
     end
 
-    #def valid_starting_spaces(board)
-        #y = 0
-        #while y < 8
-            #board.spaces[0][y].occupant.get_valid_spaces(board, board.spaces[0][y].occupant.color)
-        #end
-        #y = 0
-        #while y < 8
-            #board.spaces[1][y].occupant.get_valid_spaces(board, board.spaces[1][y].occupant.color)
-        #end
-        #y = 0
-        #while y < 8
-            #board.spaces[6][y].occupant.get_valid_spaces(board, board.spaces[6][y].occupant.color)
-        #end
-        #y = 0
-        #while y < 8
-            #board.spaces[7][y].occupant.get_valid_spaces(board, board.spaces[7][y].occupant.color)
-        #end
-    #end
-
     def get_positions(valid_spaces)
         valid_positions = []
         valid_spaces.each do |space|
@@ -188,7 +188,6 @@ class Board
             while x < 8 do
                 y = 0
                 while y < 8 do
-                    meh = @spaces[x][y]
                     if @spaces[x][y].occupant.coordinate == space
                         valid_positions.append(@spaces[x][y].occupant.position)
                     end
@@ -211,6 +210,85 @@ class Board
             winner.append(false)
         end
         winner
+    end
+
+    def pawn_capture(coordinate, color)
+      x = coordinate[0]
+      y = coordinate[1]
+      positions = []
+      if color == "W"
+        if x > 0 && y > 0
+          if !@spaces[x-1][y-1].occupant.is_a?(Empty)
+            if @spaces[x-1][y-1].occupant.color == "B"
+              positions.append(@spaces[x-1][y-1].position)
+            end
+          end
+        end
+        if x > 0 && y < 7
+          if !@spaces[x-1][y+1].occupant.is_a?(Empty)
+            if @spaces[x-1][y+1].occupant.color == "B"
+              positions.append(@spaces[x-1][y+1].position)
+            end
+          end
+        end
+      end
+
+      if color == "B"
+        if x < 7 && y > 0
+          if !@spaces[x+1][y-1].occupant.is_a?(Empty)
+            if @spaces[x+1][y-1].occupant.color == "W"
+              positions.append(@spaces[x+1][y-1].position)
+            end
+          end
+        end
+        if x < 7 && y < 7
+          if !@spaces[x+1][y+1].occupant.is_a?(Empty)
+            if @spaces[x+1][y+1].occupant.color == "W"
+              positions.append(@spaces[x+1][y+1].position)
+            end
+          end
+        end
+      end
+      positions
+    end
+
+    def promotion(destination, coordinate, color, count)
+        x = 0
+        while x < 8 do
+            y = 0
+            while y < 8 do
+                if @spaces[x][y].position == destination
+                    @spaces[x][y].occupant = Queen.new("Q#{count}", color, @spaces[x][y].position, coordinate)
+                    @spaces[x][y].occupant.id = "Q#{count}"
+                end
+                y+=1  #I think I fixed the issue with moving the promoted Queen. Time to test, and then explore capture behavior with double move.
+            end        #Then it's castling time
+            x+=1
+        end
+    end
+
+    def front_occupied(positions, color, coordinate)
+      x = coordinate[0]
+      y = coordinate[1]
+      positions.each do |pos|
+        if color == "W"
+          if (pos == @spaces[x-1][y].position) && !@spaces[x-1][y].occupant.is_a?(Empty)
+            positions.delete(pos)
+          end
+          if (pos == @spaces[x-2][y].position) && !@spaces[x-2][y].occupant.is_a?(Empty)
+            positions.delete(pos)
+          end
+        end
+
+        if color == "B"
+          if pos == @spaces[x+1][y].position && !@spaces[x+1][y].occupant.is_a?(Empty)
+            positions.delete(pos)
+          end
+          if pos == @spaces[x+2][y].position && !@spaces[x+2][y].occupant.is_a?(Empty)
+            positions.delete(pos)
+          end
+        end
+      end
     end
 end
 

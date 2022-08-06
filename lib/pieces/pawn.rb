@@ -30,8 +30,16 @@ class Pawn
         @valid_spaces = determine_spaces(template)
         @valid_spaces = remove_occupied(@valid_spaces, board, color)
 
-        if self.coordinate[0] != 6 || self.coordinate[0] != 1
+        if color == "W"
+          if self.coordinate[0] != 6
             @valid_spaces.pop
+          end
+        end
+
+        if color == "B"
+            if self.coordinate[0] != 1
+              @valid_spaces.pop
+            end
         end
     end
 
@@ -51,6 +59,3 @@ class Pawn
         valid_array
     end
 end
-
-#next order of business: pawn's capture method needs to be added. Need a function to add a valid space if an opposing piece is diagonal to it
-#then promotion and castling can be added
