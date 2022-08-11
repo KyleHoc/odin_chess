@@ -1,6 +1,6 @@
 require_relative "spaces_methods"
 class King
-    attr_accessor :color, :name, :position, :valid_spaces, :id, :coordinate
+    attr_accessor :color, :name, :position, :valid_spaces, :id, :coordinate, :check
     
     def initialize(number, color, position, coordinate)
         @color = color
@@ -18,6 +18,7 @@ class King
         @coordinate = coordinate
         @valid_spaces = []
         @id = "K"
+        @check = false
     end
 
     def get_valid_spaces(board, color)

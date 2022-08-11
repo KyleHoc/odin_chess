@@ -18,6 +18,7 @@ class Rook
         @coordinate = coordinate
         @valid_spaces = []
         @id = "R#{number}"
+        @move = false
     end
 
     def get_valid_spaces(board, color)

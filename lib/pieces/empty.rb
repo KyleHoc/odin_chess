@@ -1,5 +1,5 @@
 class Empty
-    attr_accessor :name, :position, :valid_spaces, :id, :coordinate
+    attr_accessor :name, :position, :valid_spaces, :id, :coordinate, :color
 
     def initialize(letter, number, x)
         @name = "#{letter}#{number}"
@@ -7,5 +7,6 @@ class Empty
         @valid_spaces = []
         @id = nil
         @coordinate = [x, number-1]
+        @color = nil
     end
 end

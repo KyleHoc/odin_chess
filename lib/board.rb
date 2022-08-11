@@ -1,18 +1,19 @@
-require "./space"
-require "./pieces/king"
-require "./pieces/queen"
-require "./pieces/knight"
-require "./pieces/rook"
-require "./pieces/bishop"
-require "./pieces/pawn"
+require_relative "./space"
+require_relative "./pieces/king"
+require_relative "./pieces/queen"
+require_relative "./pieces/knight"
+require_relative "./pieces/rook"
+require_relative "./pieces/bishop"
+require_relative "./pieces/pawn"
 require_relative "./pieces/empty"
+require_relative "./save"
 class Board
-    attr_accessor :spaces, :valid_id, :queen_count
+    attr_accessor :spaces, :queen_count, :current_color
     def initialize()
         alpha = ['A', 'B', 'C', 'D', 'E', 'F', "G", 'H']
         @spaces = Array.new(8){Array.new(8)}
-        @valid_id = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'B1', 'B2', 'K1', 'K2', 'R1', 'R2', 'K', 'Q']
         @queen_count = 1
+        @current_color = "W"
 
         x = 0
         while x < 8 do
@@ -91,12 +92,19 @@ class Board
     end
 
     def make_move(board, color)
+        valid_id = get_valid_id(color)
         choose_piece = false
         while choose_piece == false
-          puts "Select the piece you'd like to move. Ex. K2 to move Knight 2. King and Queen are just K and Q respectively."
+          puts "Select the piece you'd like to move. Ex. K2 to move Knight 2. King and Queen are just K and Q, or enter 'save' to save your game."
           id = gets.chomp.upcase
 
-          if @valid_id.include?(id)
+          if id == "SAVE"
+            save = Save_space.new()
+            save.new_save(@spaces, @current_color)
+            exit!
+          end
+
+          if valid_id.include?(id)
             piece = get_piece(id, color)
             piece.get_valid_spaces(board, color)
             valid_positions = get_positions(piece.valid_spaces)
@@ -139,7 +147,15 @@ class Board
         if piece.id.include?("P") && (destination.include?("A") || destination.include?("H"))
             @queen_count+=1
             promotion(destination, piece.coordinate, piece.color, @queen_count)
-            @valid_id.append("Q#{@queen_count}")
+            valid_id.append("Q#{@queen_count}")
+        end
+
+        check?(valid_id, color)
+
+        if @current_color == "W"
+          @current_color = "B"
+        else
+          @current_color = "W"
         end
     end
 
@@ -261,8 +277,8 @@ class Board
                     @spaces[x][y].occupant = Queen.new("Q#{count}", color, @spaces[x][y].position, coordinate)
                     @spaces[x][y].occupant.id = "Q#{count}"
                 end
-                y+=1  #I think I fixed the issue with moving the promoted Queen. Time to test, and then explore capture behavior with double move.
-            end        #Then it's castling time
+                y+=1  
+            end
             x+=1
         end
     end
@@ -290,16 +306,89 @@ class Board
         end
       end
     end
-end
 
-#my_board = Board.new()
-#my_board.generate_pieces
-#my_board.print_board
-#my_board.spaces[6][3].occupant.get_valid_spaces(my_board, my_board.spaces[6][3].occupant.color)
-#p my_board.spaces[6][3].occupant
-#my_board.make_move(my_board, "W")
-#my_board.assign_location(my_board.spaces[6][3].occupant, "F4", my_board)
-#my_board.print_board
-#my_board.spaces[5][3].occupant.get_valid_spaces(my_board, my_board.spaces[5][3].occupant.color)
-#p my_board.spaces[5][3].occupant
-#p my_board.spaces[6][3].occupant
+    def get_valid_id(color)
+        valid_id = []
+        x = 0
+        while x < 8 do
+            y = 0
+            while y < 8 do
+                if !@spaces[x][y].occupant.is_a?(Empty)
+                  if @spaces[x][y].occupant.color == color
+                    valid_id.append(@spaces[x][y].occupant.id)
+                  end
+                end
+                y+=1
+            end
+            x+=1
+        end
+        valid_id
+    end
+
+    def check?(valid_id, color)
+      if color == "W"
+        other_color = 'B'
+      else
+        other_color = "W"
+      end
+
+      king = get_piece('K', other_color)
+      if king == nil
+        return
+      end
+      coord = king.coordinate
+
+      valid_id.each do |piece|
+        a_piece = get_piece(piece, color)
+        a_piece.get_valid_spaces(self, color)
+        
+        if a_piece.valid_spaces.include?(king.coordinate)
+          @spaces[coord[0]][coord[1]].occupant.check = true
+            puts""
+            if color == "W"
+              puts "Black is in check"
+              break
+            else
+              puts "White is in check"
+              break
+            end
+        else
+            @spaces[coord[0]][coord[1]].occupant.check = false
+        end
+      end
+    end
+
+    def assign_resume(space)
+      x = space[3].split('')[0].to_i
+      y = space[3].split('')[1].to_i
+      position = space[2]
+
+      if space[0] != 'nil'
+        number = space[0].split('')
+        color = space[1]
+      end
+
+      if space[0].include?("R")
+        rook = Rook.new(number[1], color, position, [x,y])
+        @spaces[x][y].occupant = rook
+      elsif space[0] == 'K'
+        king = King.new(number[0], color, position, [x,y])
+        @spaces[x][y].occupant = king
+      elsif space[0].include?('K')
+        knight = Knight.new(number[1], color, position, [x,y])
+        @spaces[x][y].occupant = knight
+      elsif space[0] == 'Q'
+        queen = Queen.new(number[0], color, position, [x,y])
+        @spaces[x][y].occupant = queen
+      elsif space[0].include?('B')
+        bishop = Bishop.new(number[1], color, position, [x,y])
+        @spaces[x][y].occupant = bishop
+      elsif space[0].include?('P')
+        pawn = Pawn.new(number[1], color, position, [x,y])
+        @spaces[x][y].occupant = pawn
+      else
+        empty = Empty.new(position.split('')[0], position.split('')[1].to_i, x)
+        @spaces[x][y].occupant = empty
+      end
+    end
+  end
